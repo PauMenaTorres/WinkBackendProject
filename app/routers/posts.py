@@ -11,6 +11,13 @@ from app.models import PostCreate, PostResponse, PostStatus
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
+def parse_object_id(post_id: str) -> ObjectId:
+    try:
+        return ObjectId(post_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+
+
 @router.post("/", status_code=201, response_model=PostResponse)
 def create_post(post: PostCreate):
     post_dict = post.model_dump()
@@ -40,12 +47,20 @@ def get_posts(status: PostStatus | None = None, hashtag: str | None = None):
     return posts
 
 
+@router.get("/{post_id}", response_model=PostResponse)
+def get_post_by_id(post_id: str):
+    obj_id = parse_object_id(post_id)
+
+    post = posts_collection.find_one({"_id": obj_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post["id"] = str(post["_id"])
+    return post
+
+
 @router.patch("/{post_id}/publish", response_model=PostResponse)
 def publish_post(post_id: str):
-    try:
-        obj_id = ObjectId(post_id)
-    except InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid ID")
+    obj_id = parse_object_id(post_id)
 
     updated_doc = posts_collection.find_one_and_update(
         {"_id": obj_id},
@@ -62,10 +77,7 @@ def publish_post(post_id: str):
 
 @router.delete("/{post_id}")
 def delete_post(post_id: str):
-    try:
-        obj_id = ObjectId(post_id)
-    except InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid ID")
+    obj_id = parse_object_id(post_id)
 
     result = posts_collection.delete_one({"_id": obj_id})
 
