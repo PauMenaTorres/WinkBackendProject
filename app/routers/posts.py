@@ -37,6 +37,26 @@ def get_posts(status: PostStatus | None = None):
     return posts
 
 
+@router.patch("/{post_id}/publish", response_model=PostResponse)
+def publish_post(post_id: str):
+    try:
+        obj_id = ObjectId(post_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+
+    updated_doc = posts_collection.find_one_and_update(
+        {"_id": obj_id},
+        {"$set": {"status": PostStatus.PUBLISHED.value}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+    if not updated_doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    updated_doc["id"] = str(updated_doc["_id"])
+    return updated_doc
+
+
 @router.delete("/{post_id}")
 def delete_post(post_id: str):
     try:
