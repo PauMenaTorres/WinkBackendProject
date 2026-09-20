@@ -2,10 +2,11 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from pymongo import ReturnDocument
 
 from app.database import posts_collection
-from app.models import PostCreate, PostResponse
+from app.models import PostCreate, PostResponse, PostStatus
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 def create_post(post: PostCreate):
     post_dict = post.model_dump()
     post_dict["author"] = "Brian Fox"
-    post_dict["status"] = "draft"
+    post_dict["status"] = PostStatus.DRAFT.value
     post_dict["created_at"] = datetime.now(timezone.utc)
 
     result = posts_collection.insert_one(post_dict)
@@ -24,9 +25,13 @@ def create_post(post: PostCreate):
 
 
 @router.get("/", response_model=list[PostResponse])
-def get_posts():
+def get_posts(status: PostStatus | None = None):
+    query = {}
+    if status:
+        query["status"] = status.value
+
     posts = []
-    for doc in posts_collection.find({"status": "draft"}):
+    for doc in posts_collection.find(query):
         doc["id"] = str(doc["_id"])
         posts.append(doc)
     return posts
