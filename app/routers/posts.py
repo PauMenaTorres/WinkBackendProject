@@ -2,10 +2,11 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pymongo import ReturnDocument
 
 from app.database import posts_collection
+from app.dependencies import verify_admin_token
 from app.models import PostCreate, PostResponse, PostStatus
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -18,7 +19,7 @@ def parse_object_id(post_id: str) -> ObjectId:
         raise HTTPException(status_code=400, detail="Invalid ID")
 
 
-@router.post("/", status_code=201, response_model=PostResponse)
+@router.post("/", status_code=201, response_model=PostResponse, dependencies=[Depends(verify_admin_token)])
 def create_post(post: PostCreate):
     post_dict = post.model_dump()
     post_dict["author"] = "Brian Fox"
@@ -58,7 +59,7 @@ def get_post_by_id(post_id: str):
     return post
 
 
-@router.patch("/{post_id}/publish", response_model=PostResponse)
+@router.patch("/{post_id}/publish", response_model=PostResponse, dependencies=[Depends(verify_admin_token)])
 def publish_post(post_id: str):
     obj_id = parse_object_id(post_id)
 
@@ -75,7 +76,7 @@ def publish_post(post_id: str):
     return updated_doc
 
 
-@router.delete("/{post_id}")
+@router.delete("/{post_id}", dependencies=[Depends(verify_admin_token)])
 def delete_post(post_id: str):
     obj_id = parse_object_id(post_id)
 
