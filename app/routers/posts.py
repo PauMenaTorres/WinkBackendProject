@@ -25,10 +25,13 @@ def create_post(post: PostCreate):
 
 
 @router.get("/", response_model=list[PostResponse])
-def get_posts(status: PostStatus | None = None):
+def get_posts(status: PostStatus | None = None, hashtag: str | None = None):
+
     query = {}
     if status:
         query["status"] = status.value
+    if hashtag:
+        query["hashtags"] = hashtag
 
     posts = []
     for doc in posts_collection.find(query):
