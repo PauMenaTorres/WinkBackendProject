@@ -11,6 +11,15 @@ app = FastAPI(
     description="REST API backend for Blog (Public Readers) and CMS (Content Management System)"
 )
 
+# Enable CORS for frontend applications
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Register routers
 app.include_router(blog_router)
 app.include_router(cms_router)
