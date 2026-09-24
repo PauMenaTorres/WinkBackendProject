@@ -18,6 +18,11 @@ Each layer has a dedicated responsibility:
 * **Core**: Centralizes custom domain exceptions (`PostNotFoundException`, `InvalidIdException`) which decouple error handling from HTTP-specific constructs.
 * **Database**: Centralizes client initialization and connection pooling to the remote MongoDB cluster, ensuring that connection management remains isolated from data access routines.
 
+### Testing 
+Unit tests verify domain rules, blog visibility, and CMS authentication in complete isolation using an in-memory repository (FakePostRepository).
+
+Run the test suite using pytest: `python -m pytest -v`
+
 ### Authentication
 CMS endpoints require HTTP Bearer authentication.
 * **Static Admin Token**: `{ADMIN_TOKEN}`
